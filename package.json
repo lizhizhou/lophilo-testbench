@@ -1,0 +1,25 @@
+{
+  "name": "lophilo-testbench",
+  "version": "0.2.0",
+  "description": "Using dnode in LMC, test all Lophilo devices on the network",
+  "main": "launcher.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:Lophilo/lophilo-testbench.git"
+  },
+  "keywords": [
+    "testing",
+    "lophilo",
+    "dnode",
+    "network",
+    "mocha"
+  ],
+  "author": "Ricky Ng-Adam <rngadam@lophilo.com>",
+  "license": "GPL"
+}
