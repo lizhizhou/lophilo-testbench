@@ -19,6 +19,7 @@ describe('lophilo', function() {
   it('simple I/O works', function(done) {
     lophilo.readq = Q.nbind(lophilo.read, lophilo);
     lophilo.writeq = Q.nbind(lophilo.write, lophilo);
+    lophilo.gpio0.doe.write(lophilo.GPIO_ALL_ON);
     lophilo.writeq('gpio0.io0', 0)
       .then(function(result) {
         result.should.be.equal('lophilo: value 0 written to gpio0.io0');
@@ -37,12 +38,13 @@ describe('lophilo', function() {
           done();
       })
       .fail(function(err) {
-        //console.log(err.stack);
         done(err);
       });
+
   });
 
   after(function() {
+    lophilo.gpio0.doe.write(lophilo.GPIO_ALL_OFF);
     d.end();
   });
 });
