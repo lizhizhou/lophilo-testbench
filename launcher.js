@@ -72,9 +72,12 @@ function launchMocha(err, ip, port) {
       }
     }
   );
-  child.on('exit', function() {
-    console.log('child exited for ' + mac);
-    //process.exit();
+  child.on('exit', function(exitcode, signal) {
+    if(exitcode !== 0) {
+      console.log('test failed for ' + mac);
+    } else {
+      console.log('test successful for ' + mac);
+    }
   })
 }
 
