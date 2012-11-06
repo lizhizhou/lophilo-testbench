@@ -16,7 +16,7 @@ var disksize = parseInt(fs.readFileSync('/sys/class/block/mmcblk1/size').toStrin
 var blocksize = 4096;
 var repeatedString = '';
 var testString = '0123456789ABCDEF';
-var stringCount = 1;
+var stringCount = 4096;
 var buffer = new Buffer(testString.length*stringCount);
 
 for(var i=0; i<stringCount; i++) {
@@ -26,28 +26,22 @@ for(var i=0; i<stringCount; i++) {
 var startTime = process.hrtime();
 var lastTime = startTime;
 var lastCount = 0;
-var waiting = false;
+var written = 0;
 console.log('disk size ' + disksize);
 console.log('buffer length ' + buffer.length);
-writeStream.on('drain', function() {
-  console.log('drained!');
-  waiting = false;
-});
 
+var fd = fs.openSync('/dev/mmcblk1', 'w')
 for(var i=0; i<disksize; i+=buffer.length) {
-  if(!writeStream.write(buffer, 'ascii')) {
-    waiting = true;
-    process.nextTick();    
-  }    
+  written = 0;
+  while(written !== buffer.length) {
+    written += fs.writeSync(fd, buffer, written, buffer.length - written, i + written);  
+  }
 
   var delta = process.hrtime(lastTime);
   if(delta[0] > 5) {
     var bps = (i - lastCount)/(delta[0]);
     var mbps = Math.round(bps / (1024*1024));
     var completion = Math.round(((i/disksize)*100));
-    if(waiting) {
-      console.log('waiting...');
-    }
     console.log('bytes written: ' + i + ' total %' + completion + ' mbps ' + mbps);
 
     lastCount = i;
@@ -55,24 +49,18 @@ for(var i=0; i<disksize; i+=buffer.length) {
   }
 }
 
-writeStream.end();
+fs.closeSync(fd);
 
 var delta = process.hrtime(startTime);
 console.log('write completed in ' + delta);
 
-var readStream = fs.createReadStream(
-  '/dev/mmcblk1', 
-  {
-    encoding: 'ascii',
-    bufferSize: blocksize
-  });
-
-var currentPos = 0;
-readStream.on('data', function(data) {
-  var index = data.indexOf('0');
-  for(var i=index; i<data.length; i++) {
-    assert(data[i] === testString[i%16]);
+var readBuffer = new Buffer(buffer.length);
+fd = fs.openSync('/dev/mmcblk1', 'r')
+var read = 0;
+for(var i=0; i<disksize; i+=buffer.length) {
+  read = 0
+  while(read !== buffer.length) {
+    read += fs.readSync(fd, readBuffer, read, buffer.length - read, i + read); 
   }
-  currentPos += data.length;
-});
- 
+  assert(readBuffer.toString() === buffer.toString());
+}
