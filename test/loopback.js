@@ -1,26 +1,22 @@
 'use strict';
 
-var dnode = require('dnode');
-var Q = require('q');
 var assert = require('should');
+var dnodeloader = require('dnode-dynamicloader');
+var Q = require('q');
 
-describe('lophilo', function() {
-  var d;
+describe('lophilo pwm0 -> gpio0', function() {
   var lophilo;
 
   before(function(done) {
-    d = dnode.connect(process.env.LOPHILO_IP, process.env.LOPHILO_PORT);
-    d.on('error', function(err) {
-      console.error(err.stack);
+    dnodeloader.require('lophilo', process.env.LMC_IP, parseInt(process.env.LMC_PORT), 
+      function(err, remoteObject) {
+        if(err) return done(err);
+        lophilo = remoteObject;
+        lophilo.readq = Q.nbind(lophilo.read, lophilo);
+        lophilo.writeq = Q.nbind(lophilo.write, lophilo);
+        lophilo.powerOnShields();        
+        done();
     });
-    d.on('remote', function(remoteObject) {
-      lophilo = remoteObject;
-      lophilo.readq = Q.nbind(lophilo.read, lophilo);
-      lophilo.writeq = Q.nbind(lophilo.write, lophilo);
-      lophilo.powerOnShields();
-      done();
-    });
-
   });
 
   it('pwm -> gpio works', function(done) {
@@ -109,7 +105,7 @@ describe('lophilo', function() {
 
   after(function() {
     lophilo.powerOffShields();
-    d.end();
+    //lophilo.dnode.end();
   });
 });
 

@@ -1,18 +1,19 @@
 'use strict';
 
-var dnode = require('dnode');
 var Q = require('q');
 var assert = require('should');
+var dnodeloader = require('dnode-dynamicloader');
 
-describe('lophilo', function() {
+describe('lophilo gpio0', function() {
   var d;
   var lophilo;
 
   before(function(done) {
-    d = dnode.connect(process.env.LOPHILO_IP, process.env.LOPHILO_PORT);
-    d.on('remote', function(remoteObject) {
-      lophilo = remoteObject;
-      done();
+    dnodeloader.require('lophilo', process.env.LMC_IP, parseInt(process.env.LMC_PORT), 
+      function(err, remoteObject) {
+        if(err) return done(err);
+        lophilo = remoteObject;
+        done();
     });
   });
 
@@ -45,7 +46,7 @@ describe('lophilo', function() {
 
   after(function() {
     lophilo.gpio0.doe.write(lophilo.GPIO_ALL_OFF);
-    d.end();
+    //lophilo.dnode.end();
   });
 });
 

@@ -11,7 +11,6 @@ var mdns = require('mdns');
 var spawn = require('child_process').spawn;
 var sprintf = require('sprintf').sprintf;
 
-var LMC_LOPHILO_PATH = '/dnode?require=lophilo'
 
 var processed = {};
 
@@ -50,7 +49,7 @@ function getHWAddress(ip) {
   return hwaddress;
 }
 
-function launchMocha(err, ip, port) {
+function launchMocha(ip, port) {
   var mochaPath = require.resolve('mocha');
   var mochaBinPath = path.resolve(path.join(mochaPath, '..', 'bin', 'mocha'));
   var mac = processed[ip];
@@ -67,8 +66,8 @@ function launchMocha(err, ip, port) {
       //stdio: 'inherit',
       cwd: __dirname,
       env: {
-        LOPHILO_IP: ip,
-        LOPHILO_PORT: port
+        LMC_IP: ip,
+        LMC_PORT: port
       }
     }
   );
@@ -79,26 +78,6 @@ function launchMocha(err, ip, port) {
       console.log('test successful for ' + mac);
     }
   })
-}
-
-function getDnodeHostnamePort(lmcIP, lmcPort, dnodePath, cb) {
-  console.log('fetching dnode from ' + lmcIP);
-  var req = http.get({host: lmcIP, port: lmcPort, path: dnodePath}, function(res) {
-    var data = '';
-    res.on('data', function (chunk) {
-      data += chunk;
-    });
-
-    res.on('end', function() {
-      if(res.statusCode >= 200 && res.statusCode < 400) {
-        var port = parseInt(data);
-        cb(null, lmcIP, port);
-      }
-    });
-  });
-  req.on('error', function(err) {
-    console.log('error connecting to %s:%d', lmcIP, lmcPort);
-  });
 }
 
 if (require.main === module) {
@@ -114,18 +93,16 @@ if (require.main === module) {
       processed[mac] = ip;
       processed[ip] = mac;
 
-      console.log('service ', service);
-      getDnodeHostnamePort(
-        ip,
-        service.port,
-        LMC_LOPHILO_PATH,
-        launchMocha);
+      //console.log('service ', service);
+      launchMocha(ip, service.port)
     }
   });
   browser.on('serviceDown', function(service) {
     console.log("service down: ", service);
   });
   browser.start();
+
+  // TODO: how to keep from exiting?!
   var server = http.createServer();
   server.listen(0);
 }
