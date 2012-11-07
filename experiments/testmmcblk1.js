@@ -74,7 +74,7 @@ function writeTestData(filename, diskSize, testBuffer, startOffset, maxElapsedSe
 
   var fd = fs.openSync(filename, 'rs+')
   var loop = true;
-  for(var i=startOffset; (i+testBuffer.length)<diskSize && loop; i+=testBuffer.length) {
+  for(var i=startOffset; i<diskSize && loop; i+=testBuffer.length) {
     written = 0;
     while(written !== testBuffer.length) {
       written += fs.writeSync(fd, testBuffer, written, testBuffer.length - written, i + written);  
@@ -113,7 +113,9 @@ function checkTestData(filename, diskSize, testBuffer, startOffset, endOffset) {
     while(read !== testBuffer.length) {
       read += fs.readSync(fd, readBuffer, read, testBuffer.length - read, i + read); 
     }
-    if(readBuffer.toString() === testBuffer.toString()) {
+    if(readBuffer.length !== testBuffer.length) {
+      errors.push('read length differ, expected ' + testBuffer.length + ' got: ' + readBuffer.length)
+    } else if(readBuffer.toString() !== testBuffer.toString()) {
       errors.push('failed check at position ' + i);  
     }
     
@@ -202,5 +204,8 @@ if (require.main === module) {
   var filename = '/dev/mmcblk1';
   var infos = executeTest(filename);
   fs.writeFileSync(infos.name + '.log', JSON.stringify(infos, null, 4));
-  process.exit(infos.test.readErrors);
+  if(infos.test.readErrors.length) {
+    console.log('ERROR FOUND!');
+  }
+  process.exit(infos.test.readErrors.length);
 } 
