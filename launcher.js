@@ -60,14 +60,15 @@ function launchMocha(ip, port) {
   var log = fs.openSync(sprintf('./%s.log', mac), 'w+');
   var child = spawn(
     process.execPath, // path to node
-    [mochaBinPath, '--reporter', 'json', 'test/'],
+    [mochaBinPath, '--reporter', 'json', 'test/', '-t', '4000'],
     {
       stdio: ['ignore', log, log],
       //stdio: 'inherit',
       cwd: __dirname,
       env: {
         LMC_IP: ip,
-        LMC_PORT: port
+        LMC_PORT: port,
+        LMC_MAC: mac
       }
     }
   );
