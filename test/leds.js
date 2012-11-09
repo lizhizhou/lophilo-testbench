@@ -17,6 +17,7 @@ describe('onboard leds', function() {
   });
 
   it('MAC to colors', function(done) {
+    assert(process.env.LMC_MAC, 'LMC_MAC environment variable must be set');
     var values = process.env.LMC_MAC.match(/\w+/g);
     var ledIndex = 0;
     var colors = [
