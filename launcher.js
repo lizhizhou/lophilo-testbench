@@ -11,7 +11,6 @@ var mdns = require('mdns');
 var spawn = require('child_process').spawn;
 var sprintf = require('sprintf').sprintf;
 
-
 var processed = {};
 
 function getHWAddress(ip) {
