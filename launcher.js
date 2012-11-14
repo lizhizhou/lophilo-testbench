@@ -1,12 +1,12 @@
 'use strict';
 
 var assert = require('assert');
+var dns = require('dns');
 var fs = require('fs');
 var http = require('http');
+var mdns = require('mdns');
 var os = require('os');
 var path = require('path');
-var dns = require('dns');
-var mdns = require('mdns');
 
 var spawn = require('child_process').spawn;
 var sprintf = require('sprintf').sprintf;
@@ -59,7 +59,17 @@ function launchMocha(ip, port) {
   var log = fs.openSync(sprintf('./%s.log', mac), 'w+');
   var child = spawn(
     process.execPath, // path to node
-    [mochaBinPath, '--reporter', 'json', 'test/', '-t', '4000'],
+    [
+      mochaBinPath,
+      '--reporter', 'json',
+      '-t', '8000',
+      'test/audio.js',
+      'test/leds.js',
+      'test/mmcblk1.js',
+      'test/simple.js',
+      'test/ft2232.js',
+      'test/loopback.js',
+    ],
     {
       stdio: ['ignore', log, log],
       //stdio: 'inherit',
@@ -87,7 +97,7 @@ if (require.main === module) {
       var ip = service.addresses[0];
       var mac = getHWAddress(ip);
       if(processed[mac]) {
-        console.log('already processed ' + mac);
+        console.log('already processing ' + mac);
         return;
       }
       processed[mac] = ip;
