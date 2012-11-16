@@ -8,7 +8,7 @@ describe('onboard leds', function() {
   var lophilo;
 
   before(function(done) {
-    dnodeloader.require('lophilo', process.env.LMC_IP, parseInt(process.env.LMC_PORT), 
+    dnodeloader.require('lophilo', process.env.LMC_IP, parseInt(process.env.LMC_PORT),
       function(err, remoteObject) {
         if(err) return done(dnodeloader.err(err));
         lophilo = remoteObject;
@@ -18,28 +18,30 @@ describe('onboard leds', function() {
 
   it('MAC to colors', function(done) {
     assert(process.env.LMC_MAC, 'LMC_MAC environment variable must be set');
-    var values = process.env.LMC_MAC.match(/\w+/g);
+    var values = process.env.LMC_MAC.match(/\w/g);
     var ledIndex = 0;
     var colors = [
-      'White', 
-      'Green', 
-      'Yellow', 
-      'Red', 
-      'Blue', 
-      'Purple', 
-      'Orange'
+      'White',
+      'Green',
+      'Yellow',
+      'Red',
+      'Blue',
+      'Purple',
+      'Orange',
+      'Pink',
+      'Black',
     ];
     var selected = []
-    values.slice(2).forEach(function(value) {
+    values.slice(8).forEach(function(value) {
       value = parseInt(value, 16);
-      var selectedColor = colors[Math.round(value/(0xFF/colors.length))];
+      var selectedColor = colors[Math.round(value/(0xF/colors.length))];
       selected.push(selectedColor);
       var rgbValue = ntc.value(selectedColor);
       lophilo.leds['led' + ledIndex].srgb.write(rgbValue);
       ledIndex++;
     });
     console.log(process.env.LMC_MAC + ' = ' + selected);
-    done();    
+    done();
   });
 
   after(function() {

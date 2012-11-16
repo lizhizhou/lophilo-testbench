@@ -14,9 +14,10 @@ var sprintf = require('sprintf').sprintf;
 var processed = {};
 
 function getHWAddress(ip) {
+  assert(typeof ip === 'string', 'ip must be a valid string');
   //console.log('matching ' + ip);
   var interfaces = os.networkInterfaces();
-  var hwaddress;
+  var hwaddress  = null;
   var found = Object.keys(interfaces).some(function(interfaceName) {
     // console.log(interfaceName);
     return interfaces[interfaceName].some(function(potentialMatch) {
@@ -43,12 +44,22 @@ function getHWAddress(ip) {
       }
     });
   }
-  assert(found, 'could not find a match for ' + ip);
-  assert('74:e5:0b:0d:19:be'.length == hwaddress.length, 'incorrect ' + hwaddress);
+  if(!found) {
+    console.error('could not find a match for ' + ip);
+    return null;
+  }
+
+  if('74:e5:0b:0d:19:be'.length != hwaddress.length) {
+    console.error('incorrect ' + hwaddress);
+    return null;
+  }
+
   return hwaddress;
 }
 
 function launchMocha(ip, port) {
+  assert(ip);
+  assert(port);
   var mochaPath = require.resolve('mocha');
   var mochaBinPath = path.resolve(path.join(mochaPath, '..', 'bin', 'mocha'));
   var mac = processed[ip];
@@ -56,13 +67,24 @@ function launchMocha(ip, port) {
   console.log('mac: ' + mac);
   console.log('using ' + mochaBinPath);
 
-  var log = fs.openSync(sprintf('./%s.log', mac), 'w+');
+  var logFilenameStdout =  path.join(__dirname, 'results', sprintf('%s.stdout', mac))
+  var logStdout = fs.openSync(logFilenameStdout, 'w+');
+  var logFilenameStderr =  path.join(__dirname, 'results', sprintf('%s.stderr', mac))
+  var logStderr = fs.openSync(logFilenameStderr, 'w+');
+
+  var configFilename = path.join(__dirname, 'results', sprintf('%s.config', mac))
+  var configInformation = sprintf(
+      'export LMC_IP=%s\n' +
+      'export LMC_PORT=%s\n' +
+      'export LMC_MAC=%s'
+      , ip, port, mac)
+  fs.writeFileSync(configFilename, configInformation);
+
   var child = spawn(
-    process.execPath, // path to node
+    mochaBinPath,
     [
-      mochaBinPath,
       '--reporter', 'json',
-      '-t', '8000',
+      '-t', '60000',
       'test/audio.js',
       'test/leds.js',
       'test/mmcblk1.js',
@@ -71,10 +93,11 @@ function launchMocha(ip, port) {
       'test/loopback.js',
     ],
     {
-      stdio: ['ignore', log, log],
+      stdio: ['ignore', logStdout, logStderr], // stdin, stdout, stderr
       //stdio: 'inherit',
       cwd: __dirname,
       env: {
+        PATH: '/home/rngadam/local/node/bin',
         LMC_IP: ip,
         LMC_PORT: port,
         LMC_MAC: mac
@@ -82,22 +105,49 @@ function launchMocha(ip, port) {
     }
   );
   child.on('exit', function(exitcode, signal) {
+    console.log(JSON.stringify(arguments));
     if(exitcode !== 0) {
-      console.log('test failed for ' + mac);
+      console.log('test failed for MAC %s IP %s PORT %d (exit: %d)', mac, ip, port, exitcode);
     } else {
-      console.log('test successful for ' + mac);
+      console.log('test successful for MAC %s IP %s PORT %d', mac, ip, port);
     }
   })
 }
+function filterLophilo(address) {
+  console.log('filtering on ' + address);
+  return true;
+}
 
 if (require.main === module) {
-  var browser = mdns.createBrowser(mdns.tcp('http'));
+  var sequence = [
+      mdns.rst.DNSServiceResolve(),
+      //mdns.rst.DNSServiceGetAddrInfo({families: [4] },
+      mdns.rst.getaddrinfo(),
+      mdns.rst.makeAddressesUnique(),
+      mdns.rst.logService(),
+      mdns.rst.filterAdresses(filterLophilo),
+  ];
+
+  var browser = mdns.createBrowser(
+    mdns.tcp('http')
+    /*{resolverSequence: sequence}*/
+    );
+
   browser.on('serviceUp', function(service) {
     if(service.name.indexOf('lmc') === 0) {
       var ip = service.addresses[0];
+      if(!ip) {
+        console.error('no ip for this service' + JSON.stringify(service));
+        return;
+      }
       var mac = getHWAddress(ip);
+      if(!mac) {
+        console.error('no mac for this service' + JSON.stringify(service));
+        return;
+      }
+
       if(processed[mac]) {
-        console.log('already processing ' + mac);
+        //console.log('already processing ' + mac);
         return;
       }
       processed[mac] = ip;
@@ -109,6 +159,10 @@ if (require.main === module) {
   });
   browser.on('serviceDown', function(service) {
     console.log("service down: ", service);
+  });
+
+  browser.on('error', function(exception) {
+    console.error('mdns browser error ' + exception);
   });
   browser.start();
 
