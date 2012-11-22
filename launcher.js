@@ -37,7 +37,7 @@ function getHWAddress(ip) {
     var arpFileContent = fs.readFileSync('/proc/net/arp');
     var arps = arpFileContent.toString().split('\n');
     found = arps.some(function(arp) {
-      if(arp.indexOf(ip) === 0) {
+      if(arp.indexOf(ip + ' ') === 0) {
         // console.log('match! ' + arp);
         hwaddress = arp.match(/[\w:\.]+/g)[3];
         return true;
@@ -129,8 +129,8 @@ if (require.main === module) {
   ];
 
   var browser = mdns.createBrowser(
-    mdns.tcp('http')
-    /*{resolverSequence: sequence}*/
+    mdns.tcp('http'),
+    {resolverSequence: sequence}
     );
 
   browser.on('serviceUp', function(service) {
