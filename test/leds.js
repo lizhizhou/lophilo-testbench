@@ -3,6 +3,7 @@
 var assert = require('should');
 var dnodeloader = require('dnode-dynamicloader');
 var ntc = require('ntc');
+var utils = require('./lib/utils');
 
 describe('onboard leds', function() {
   var lophilo;
@@ -29,18 +30,21 @@ describe('onboard leds', function() {
       'Purple',
       'Orange',
       'Pink',
-      'Black',
+      'Aquamarine',
+      'Maroon',
     ];
     var selected = []
     values.slice(8).forEach(function(value) {
       value = parseInt(value, 16);
-      var selectedColor = colors[Math.round(value/(0xF/colors.length))];
+      var idx = Math.floor(value%colors.length)
+      var selectedColor = colors[idx];
       selected.push(selectedColor);
       var rgbValue = ntc.value(selectedColor);
       lophilo.leds['led' + ledIndex].srgb.write(rgbValue);
       ledIndex++;
     });
-    console.log(process.env.LMC_MAC + ' = ' + selected);
+    console.log(process.env.LMC_MAC + ' = ' + JSON.stringify(selected));
+    utils.record('colors', JSON.stringify(selected));
     done();
   });
 

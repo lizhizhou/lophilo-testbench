@@ -4,6 +4,7 @@ var crypto = require('crypto');
 var assert = require('should');
 var dnodeloader = require('dnode-dynamicloader');
 var dnodeError = dnodeloader.err;
+var utils = require('./lib/utils');
 
 describe('usb host/client ft2232', function() {
   var lcons;
@@ -23,11 +24,7 @@ describe('usb host/client ft2232', function() {
   });
 
   beforeEach(function(done) {
-    // get rid of any garbage that could be left on the command-line
-    lcons.writeReadUntilDelimiter('\n', function(err, data) {
-      if(err) return done(dnodeError(err));
-      done();
-    });
+    utils.cleanSerialGarbage(lcons, done);
   });
 
   it('/etc/debian_version is correct', function(done) {
