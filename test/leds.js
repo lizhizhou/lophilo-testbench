@@ -30,8 +30,8 @@ describe('onboard leds', function() {
       'Purple',
       'Orange',
       'Pink',
-      'Aquamarine',
-      'Maroon',
+      'Blue',
+      'Red',
     ];
     var selected = []
     values.slice(8).forEach(function(value) {
