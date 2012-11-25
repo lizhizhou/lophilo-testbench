@@ -4,7 +4,7 @@ var dnodeloader = require('dnode-dynamicloader');
 var dnodeError = dnodeloader.err;
 
 function record(id, value) {
-  var filename = path.join(__dirname, '..', '..', 'results', process.env.LMC_MAC + '.' + id);
+  var filename = path.join(__dirname, '..', '..', 'results', process.env.LMC_TESTID + '.' + id);
   console.log('recording to ' + filename);
   fs.writeFileSync(filename, value);
 }
