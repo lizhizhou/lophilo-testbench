@@ -1,0 +1,13 @@
+[Unit]
+Description=Test SPDIF port
+DefaultDependencies=no
+Wants=local-fs.target
+After=systemd-modules-load.service
+Before=sysinit.target shutdown.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash -c "echo 0x1 > /sys/kernel/debug/lophilo/gpio0/doe; while true; do echo 0x1 > /sys/kernel/debug/lophilo/gpio0/io0; sleep 1; echo 0x0 > /sys/kernel/debug/lophilo/gpio0/io0; sleep 1; done"
+
+[Install]
+WantedBy=multi-user.target
